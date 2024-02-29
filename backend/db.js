@@ -29,10 +29,21 @@ const mongoDB =async ()=>{
   connect.then(()=>{
     console.log('connected..');
    const foodSchema = new Schema({},{strict:false});
-   const food_items = mongoose.model('food_items',foodSchema);
-   food_items.find({}).then((response)=>{
-     console.log(response);
+  
+   const food_itemsData = mongoose.model('food_items',foodSchema);
+  
+   food_itemsData.find({}).then(async(foodItemsData)=>{
+    // console.log(response)
+    const foodCategorySchema = new Schema({},{strict:false});
+    const food_CategoryData = mongoose.model('food_category',foodCategorySchema,'food_category');
+    await food_CategoryData.find({}).then((foodCategoryData)=>{
+      global.food_items = foodItemsData;
+      global.food_category = foodCategoryData;
+      console.log(global.food_category)
+    })
+    
    })
+  
   }).catch((err)=>{
     console.log(err);
   })

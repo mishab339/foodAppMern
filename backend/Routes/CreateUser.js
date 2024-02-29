@@ -3,6 +3,9 @@ const router = express.Router();
 
 const User = require('../models/user');
 const { body ,validationResult} = require('express-validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const jwtSecret = "MuhammedMishab"
 
 router.post('/createUser',[
     body('email').isEmail(),
@@ -18,10 +21,12 @@ router.post('/createUser',[
     if(!error.isEmpty()){
         return res.status(400).json({error:error.array()});
     }
+    const salt = await bcrypt.genSalt(10);
+    const secPassword = await bcrypt.hash(req.body.password,salt);
     try{
         await User.create({
            name:req.body.name,
-           password:req.body.password,
+           password:secPassword,
            email:req.body.email,
            location:req.body.location
         }).then(res.json({success:true}))
@@ -46,10 +51,17 @@ router.post('/loginUser',[
      if(!userData){
         return res.status(400).json({error:'Try login with correct credentials'})
      }
-     if(req.body.password !== userData.password){
-        return res.status(400).json({error:'Try login with correct credentials'})
+     const pwdCompare = await bcrypt.compare(req.body.password,userData.password);
+     if(!pwdCompare){
+        return res.status(400).json({error:'Try login with correct credentialskkk'})
      }
-     return res.json({success:true});
+     const data = {
+        user:{
+            id:userData.id
+        }
+     }
+     const authToken = jwt.sign(data,jwtSecret)
+     return res.json({success:true,authToken:authToken});
     }catch (error){
         console.log(error);
         res.json({success:false});
